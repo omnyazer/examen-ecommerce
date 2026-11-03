@@ -104,6 +104,8 @@ docker compose -p ecommerce-monitoring -f monitoring/compose.yml up -d
 
 Ouvrir `http://localhost:3004`, créer son compte administrateur privé et ajouter les moniteurs HTTP de `monitoring/targets.json`. Ce JSON est une liste de référence, pas un fichier d'import Uptime Kuma. Remplacer les quatre adresses production après leur création.
 
+Sur le poste où l'initialisation a été effectuée, le compte local et les quatre moniteurs de préproduction sont déjà créés. Les identifiants sont conservés uniquement dans `monitoring/.credentials.local.json`, exclu de Git. Ne pas copier ce fichier dans un commit ni le partager. Configurer son propre moyen d'alerte dans l'interface et l'associer aux moniteurs ; aucun destinataire externe n'est configuré automatiquement.
+
 Pour chaque moniteur : HTTP attendu 200, délai 120 secondes, intervalle 300 secondes, deux tentatives avant alerte. Dans Notifications, configurer une notification SMTP autorisée, utiliser le bouton de test et l'associer aux huit moniteurs. Avec Kuma local, les ports SMTP ne sont pas soumis aux limitations des services Render gratuits.
 
 Vérifier une alerte de panne et de rétablissement avec un moniteur temporaire visant une URL `/health-inexistant`, puis remettre `/health`. Ne pas interrompre les services réels pour ce test.

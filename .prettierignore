@@ -4,6 +4,7 @@
 **/dist/**
 **/coverage/**
 docs/api/**
+monitoring/.credentials.local.json
 **/package-lock.json
 .env
 **/.env*
