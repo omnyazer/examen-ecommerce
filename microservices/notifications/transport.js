@@ -2,12 +2,34 @@ const nodemailer = require('nodemailer');
 
 /**
  * Construit le transport SMTP local ou le transport HTTPS compatible Render gratuit.
- * Une réponse Brevo confirme l'acceptation du message, pas sa livraison finale.
+ * Une réponse du fournisseur confirme l'acceptation du message, pas sa livraison finale.
  * @param {object} env Configuration fournie par les variables d'environnement.
  * @param {Function} fetchImpl Client HTTP injectable pour les tests.
  * @returns {{sendMail: Function}} Transport utilisable par le service de notifications.
  */
 function createTransport(env, fetchImpl = fetch) {
+  if (env.EMAIL_PROVIDER === 'resend') {
+    if (!env.RESEND_API_KEY || !env.EMAIL_FROM) throw new Error('Configuration Resend incomplète.');
+    return {
+      async sendMail({ to, subject, text }) {
+        const response = await fetchImpl('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, text }),
+          signal: AbortSignal.timeout(10000),
+          redirect: 'error',
+        });
+        if (response.status !== 200) throw new Error('Le fournisseur a refusé la notification.');
+        const result = await response.json();
+        if (typeof result.id !== 'string' || !result.id)
+          throw new Error('Accusé de réception du fournisseur absent.');
+        return { accepted: [to] };
+      },
+    };
+  }
   if ((env.EMAIL_PROVIDER || 'smtp') === 'brevo') {
     if (!env.BREVO_API_KEY || !env.EMAIL_FROM) throw new Error('Configuration Brevo incomplète.');
     return {

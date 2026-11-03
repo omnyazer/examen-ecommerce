@@ -6,7 +6,7 @@
 
 - Journaux JSON Pino pour le backend, la gateway, le stock et les notifications.
 - Contrôles `/health` pour les quatre services ; le backend et le stock vérifient MongoDB.
-- Transport de mails HTTPS Brevo, configurable sans modifier le mode SMTP local.
+- Transports de mails HTTPS Brevo et Resend, configurables sans modifier le mode SMTP local.
 - Initialisation du catalogue sans suppression des données existantes et outil de promotion d'un compte administrateur existant.
 - Génération de documentation JSDoc et publication comme artefact de CI.
 - Construction des images Docker en CI, publication GHCR et déploiement Render activables par configuration GitHub.

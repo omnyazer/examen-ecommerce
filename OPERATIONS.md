@@ -49,6 +49,10 @@ Saisir l'adresse Atlas cible et l'email exact de ce compte. Seul ce compte exist
 
 ## Notifications via HTTPS
 
+Pour Resend, créer un compte avec l'adresse de réception du test, puis créer une clé API avec le droit d'envoi. Dans le service notifications Render, utiliser `EMAIL_PROVIDER=resend`, `EMAIL_FROM=onboarding@resend.dev`, `RESEND_API_KEY` et `NOTIFICATIONS_ENABLED=true`. Dans le service application, définir `NOTIFICATIONS_ENABLED=true` et `ORDER_NOTIFICATION_EMAIL` sur l'adresse du compte Resend. Sans domaine validé, l'expéditeur de test Resend ne permet l'envoi qu'à cette adresse. Pour d'autres destinataires, valider un domaine et adapter `EMAIL_FROM`. Redéployer les deux services avec le code à jour, puis passer une nouvelle commande ; les anciennes notifications désactivées ne sont pas renvoyées.
+
+L'intégration Brevo reste disponible comme autre transport HTTPS :
+
 Dans Brevo, valider un expéditeur et créer une clé API (pas une clé SMTP). Dans le service notifications Render :
 
 ```text

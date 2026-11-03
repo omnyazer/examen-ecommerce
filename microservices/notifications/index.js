@@ -8,8 +8,9 @@ try {
   const transporter = enabled ? createTransport(process.env) : null;
   const app = createApp({
     transporter,
-    sender:
-      process.env.EMAIL_PROVIDER === 'brevo' ? process.env.EMAIL_FROM : process.env.EMAIL_USER,
+    sender: ['brevo', 'resend'].includes(process.env.EMAIL_PROVIDER)
+      ? process.env.EMAIL_FROM
+      : process.env.EMAIL_USER,
     serviceToken: process.env.INTERNAL_SERVICE_TOKEN,
     enabled,
   });
