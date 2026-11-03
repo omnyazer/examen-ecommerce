@@ -68,7 +68,7 @@ jobs:
 
   backend:
     name: Tests du backend et des microservices
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     env:
       NODE_ENV: test
@@ -96,9 +96,11 @@ jobs:
           done
       - name: Démarrer MongoDB pour les tests
         run: |
+          uname -r
           docker run --detach --name ci-mongo --publish 127.0.0.1:27017:27017 mongo:8.0
           node --input-type=commonjs <<'NODE'
           const mongoose = require('./backend/node_modules/mongoose');
+          const { execFileSync } = require('node:child_process');
           (async () => {
             const deadline = Date.now() + 120000;
             while (Date.now() < deadline) {
@@ -108,8 +110,11 @@ jobs:
                 await mongoose.disconnect();
                 console.log('MongoDB est prêt.');
                 return;
-              } catch {
+              } catch (error) {
                 await mongoose.disconnect();
+                const running = execFileSync('docker', ['inspect', '--format', '{{.State.Running}}', 'ci-mongo'], { encoding: 'utf8' }).trim();
+                if (running !== 'true') throw new Error('Le conteneur MongoDB est arrêté. Consultez ses journaux.');
+                console.log(`Connexion MongoDB en attente : ${error.name}`);
                 await new Promise(resolve => setTimeout(resolve, 2000));
               }
             }
