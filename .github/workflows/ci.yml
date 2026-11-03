@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Qualité du code
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22.23.1'
+          cache: npm
+      - name: Installer les outils de qualité
+        run: npm ci
+      - name: Vérifier ESLint
+        run: npm run lint
+      - name: Vérifier Prettier
+        run: npm run format:check
+      - name: Auditer les outils de qualité
+        run: npm audit --audit-level=high
+
+  frontend:
+    name: Tests et compilation du frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22.23.1'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Installer les dépendances
+        run: npm ci
+      - name: Tester le frontend
+        run: npm test
+      - name: Compiler le frontend
+        run: npm run build
+      - name: Auditer les dépendances
+        run: npm audit --audit-level=high
+      - name: Conserver la compilation
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-build
+          path: frontend/build/
+          if-no-files-found: error
+          retention-days: 3
+
+  backend:
+    name: Tests du backend et des microservices
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mongo:
+        image: mongo:8.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      NOTIFICATIONS_ENABLED: 'false'
+      RECOVERY_TEST_MONGO_URI: mongodb://127.0.0.1:27017
+      STOCK_TEST_MONGO_URI: mongodb://127.0.0.1:27017
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22.23.1'
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            gateway/package-lock.json
+            microservices/notifications/package-lock.json
+            microservices/stock-management/package-lock.json
+            microservices/auth-gateway/package-lock.json
+      - name: Installer les dépendances serveur
+        run: |
+          for component in backend gateway microservices/notifications microservices/stock-management microservices/auth-gateway; do
+            (cd "$component" && npm ci)
+          done
+      - name: Tester le backend, les notifications et le stock
+        run: >-
+          node --test
+          backend/tests/*.test.cjs
+          microservices/notifications/tests/*.test.cjs
+          microservices/stock-management/tests/*.test.cjs
+      - name: Auditer les dépendances serveur
+        run: |
+          for component in backend gateway microservices/notifications microservices/stock-management microservices/auth-gateway; do
+            (cd "$component" && npm audit --audit-level=high)
+          done
