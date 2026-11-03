@@ -1,0 +1,8 @@
+**/node_modules/**
+**/.git/**
+**/build/**
+**/dist/**
+**/coverage/**
+**/package-lock.json
+.env
+**/.env*
