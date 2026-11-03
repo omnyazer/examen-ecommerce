@@ -66,6 +66,20 @@ Dans l'application du même environnement, définir `NOTIFICATIONS_ENABLED=true`
 
 ## CI/CD
 
+### Activation directe avec Render
+
+Pour la préproduction actuellement reliée à `main`, ouvrir chacun des quatre services Render, puis Settings > Build & Deploy > Auto-Deploy, sélectionner **After CI Checks Pass** et enregistrer. Les services concernés sont `examen-ecommerce` (stock), `examen-ecommerce-1` (notifications), `ecommerce-gateway-preprod` et `ecommerce-app-preprod`.
+
+GitHub Actions effectue les contrôles et construit les images ; Render attend les checks réussis avant de reconstruire et déployer chaque service. Vérifier ensuite dans Render un événement automatique associé au même commit et son statut live. Un déclenchement manuel ne prouve pas le fonctionnement du déploiement automatique.
+
+Avec cette méthode, laisser `ENABLE_RENDER_CD` absent ou à `false` pour ne pas déclencher également les hooks. Aucun secret de déploiement Render n'est requis dans GitHub. La publication GHCR reste activable séparément avec `ENABLE_IMAGE_PUBLISH=true`.
+
+Après création de la production, associer les quatre services de préproduction à `staging`, ceux de production à `main`, et activer le même réglage sur les deux groupes. Les déploiements natifs des différents services ne sont pas coordonnés et ne constituent pas une mise à jour atomique.
+
+### Variante pilotée par les hooks GitHub Actions
+
+Cette variante remplace le déclenchement natif ci-dessus ; choisir une seule méthode.
+
 1. Créer la branche `staging` à partir de `main`, puis la pousser soi-même. Associer les services Render de préproduction à `staging`, ceux de production à `main`.
 2. Dans GitHub, créer les environnements `preproduction` et `production` dans Settings > Environments.
 3. Dans chaque environnement GitHub, enregistrer les secrets `RENDER_API_KEY`, `RENDER_STOCK_HOOK`, `RENDER_NOTIFICATIONS_HOOK`, `RENDER_GATEWAY_HOOK` et `RENDER_APP_HOOK`. Les quatre hooks proviennent de Settings > Deploy Hook des services correspondants. Ne jamais mélanger les hooks des deux environnements.
