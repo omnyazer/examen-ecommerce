@@ -11,6 +11,8 @@ async function promoteAdmin() {
     !process.env.MONGO_URI
   )
     throw new Error('Configuration ou confirmation absente.');
+  if (process.env.ATLAS_DNS_SERVERS)
+    require('node:dns').setServers(process.env.ATLAS_DNS_SERVERS.split(','));
   await mongoose.connect(process.env.MONGO_URI);
   const result = await User.updateOne(
     { email: process.env.ADMIN_EMAIL.trim().toLowerCase() },

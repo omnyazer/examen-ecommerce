@@ -23,6 +23,8 @@ if (require.main === module) {
     if (!process.argv.includes('--seed-products'))
       throw new Error('Confirmation --seed-products requise.');
     if (!process.env.MONGO_URI) throw new Error('MONGO_URI requis.');
+    if (process.env.ATLAS_DNS_SERVERS)
+      require('node:dns').setServers(process.env.ATLAS_DNS_SERVERS.split(','));
     await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 15000 });
     logger.info({ inserted: await seedProducts() }, 'catalogue_initialized');
   })()
