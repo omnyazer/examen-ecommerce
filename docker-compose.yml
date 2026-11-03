@@ -1,32 +1,61 @@
-version: '3'
 services:
   frontend:
     build: ./frontend
     ports:
-      - '3000:3000'
+      - '127.0.0.1:3002:80'
     depends_on:
       - backend
-
   backend:
     build: ./backend
-    ports:
-      - '5000:5000'
     environment:
-      - MONGO_URI=mongodb://mongo:27017/mydatabase
+      NODE_ENV: development
+      PORT: 5000
+      MONGO_URI: mongodb://mongo:27017/exam1Db
+      FRONTEND_ORIGIN: http://localhost:3002
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN requis}
+      GATEWAY_URL: http://gateway:8000
+      NOTIFICATIONS_ENABLED: ${NOTIFICATIONS_ENABLED:-false}
+      ORDER_NOTIFICATION_EMAIL: ${ORDER_NOTIFICATION_EMAIL:-}
     depends_on:
-      - mongo
-
+      mongo:
+        condition: service_healthy
+      gateway:
+        condition: service_started
   mongo:
-    image: mongo
-    ports:
-      - '27018:27017'
-
-  notifications:
-    build: ./microservices/notifications
-    ports:
-      - '3001:3001'
-
+    image: mongo:8.0
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'quit(db.adminCommand({ping:1}).ok ? 0 : 1)']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  gateway:
+    build: ./gateway
+    environment:
+      PORT: 8000
+      STOCK_SERVICE_URL: http://stock-management:4003
+      NOTIFI_SERVICE_URL: http://notifications:4002
+    depends_on:
+      - stock-management
+      - notifications
   stock-management:
     build: ./microservices/stock-management
-    ports:
-      - '3002:3002'
+    environment:
+      PORT: 4003
+      MONGO_URI: mongodb://mongo:27017/exam1Db
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN requis}
+    depends_on:
+      mongo:
+        condition: service_healthy
+  notifications:
+    build: ./microservices/notifications
+    environment:
+      PORT: 4002
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN requis}
+      NOTIFICATIONS_ENABLED: ${NOTIFICATIONS_ENABLED:-false}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_APPLICATION_PASSWORD: ${EMAIL_APPLICATION_PASSWORD:-}
+volumes:
+  mongo-data:

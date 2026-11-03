@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api/admin';
+import { API_BASE_URL as apiUrl } from './config';
+const API_BASE_URL = `${apiUrl}/admin`;
 
 export const getOrders = () => axios.get(`${API_BASE_URL}/orders`, { withCredentials: true });
 export const getProducts = () => axios.get(`${API_BASE_URL}/products`, { withCredentials: true });

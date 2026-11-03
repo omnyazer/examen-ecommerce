@@ -22,7 +22,7 @@ try {
     serviceToken: process.env.INTERNAL_SERVICE_TOKEN,
     enabled,
   });
-  const port = process.env.NOTIFI_PORT || 4002;
+  const port = process.env.PORT || process.env.NOTIFI_PORT || 4002;
   const server = app.listen(port, () => {
     console.log(`Service de notification en écoute sur le port ${port}`);
     if (!enabled) console.log('Envoi des mails désactivé');

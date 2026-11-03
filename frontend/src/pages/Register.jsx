@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../services/config';
 
 const passwordRequirements =
   'Le mot de passe doit contenir au moins 12 caractères, une majuscule, un chiffre et un caractère spécial.';
@@ -38,7 +39,7 @@ const Register = () => {
     }
 
     try {
-      await axios.post('http://localhost:5000/api/auth/register', formData, {
+      await axios.post(`${API_BASE_URL}/auth/register`, formData, {
         withCredentials: true,
       });
       alert('Inscription réussie ! Vous pouvez maintenant vous connecter.');

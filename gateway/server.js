@@ -29,7 +29,7 @@ app.use((error, req, res, next) => {
 });
 
 // Lancer le Gateway
-const PORT = process.env.GATEWAY_PORT || 8000;
+const PORT = process.env.PORT || process.env.GATEWAY_PORT || 8000;
 app.listen(PORT, () => {
   console.log(`Gateway opérationnel sur le port ${PORT}`);
 });

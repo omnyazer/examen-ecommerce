@@ -8,7 +8,7 @@ async function start() {
     const app = createApp({ Product, serviceToken: process.env.INTERNAL_SERVICE_TOKEN });
     if (!process.env.MONGO_URI) throw new Error('MONGO_URI est requis.');
     await mongoose.connect(process.env.MONGO_URI);
-    const port = process.env.STOCK_PORT || 4003;
+    const port = process.env.PORT || process.env.STOCK_PORT || 4003;
     const server = app.listen(port, () =>
       console.log(`Service de gestion des stocks sur le port ${port}`)
     );
