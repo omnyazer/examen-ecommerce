@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const Product = require('./models/Product');
 const { createApp } = require('./app');
+const { startupError } = require('./startupError');
 
 async function start() {
   try {
@@ -17,10 +18,8 @@ async function start() {
       await mongoose.disconnect();
       process.exitCode = 1;
     });
-  } catch {
-    console.error(
-      'Impossible de démarrer le service de stock : vérifier MongoDB et la configuration.'
-    );
+  } catch (error) {
+    console.error(startupError(error));
     await mongoose.disconnect();
     process.exitCode = 1;
   }
