@@ -1,3 +1,4 @@
+const { logger } = require('../logger');
 // backend/controllers/orderController.js
 const Order = require('../models/Order');
 const Product = require('../models/Product');
@@ -9,6 +10,11 @@ const schemas = require('../validation/schemas');
 
 const requestKeyPattern = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 
+/** Valide une commande, recalcule les prix et persiste une demande idempotente avant réservation.
+ * @function createOrder
+ * @param {object} req Requête authentifiée avec en-tête Idempotency-Key UUID.
+ * @param {object} res Réponse 201 confirmée, 202 en cours ou erreur de validation.
+ */
 exports.createOrder = async (req, res) => {
   const validated = schemas.validate(schemas.order, req.body || {});
   if (validated.error) return res.status(400).json({ message: validated.error });
@@ -125,7 +131,7 @@ exports.createOrder = async (req, res) => {
     }
     return checkoutService.respond(await checkoutService.processCheckout(checkout._id), res);
   } catch (error) {
-    console.error('Erreur lors de la création de la commande');
+    logger.error('Erreur lors de la création de la commande');
     res.status(500).json({
       message: 'Une erreur est survenue lors de la création de la commande.',
     });

@@ -1,3 +1,4 @@
+const { logger } = require('../logger');
 function notFound(req, res) {
   res.status(404).json({ message: 'Ressource introuvable.' });
 }
@@ -12,7 +13,7 @@ function errorHandler(error, req, res, next) {
   if (['ValidationError', 'CastError'].includes(error.name)) {
     return res.status(400).json({ message: 'Les données envoyées sont invalides.' });
   }
-  console.error('Une requête a échoué.');
+  logger.error('Une requête a échoué.');
   return res.status(500).json({ message: 'Une erreur interne est survenue.' });
 }
 

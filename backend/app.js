@@ -1,3 +1,4 @@
+const { requestLog } = require('./logger');
 const express = require('express');
 const path = require('node:path');
 const mongoose = require('mongoose');
@@ -7,6 +8,15 @@ const { notFound, errorHandler } = require('./middlewares/errorHandler');
 function createApp() {
   const app = express();
   app.disable('x-powered-by');
+  app.use(requestLog);
+  app.use((req, res, next) => {
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.set('X-Frame-Options', 'DENY');
+    if (process.env.NODE_ENV === 'production')
+      res.set('Strict-Transport-Security', 'max-age=31536000');
+    next();
+  });
   app.get('/health', (req, res) => {
     const ready = mongoose.connection.readyState === 1;
     res.status(ready ? 200 : 503).json({ status: ready ? 'ok' : 'unavailable' });

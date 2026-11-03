@@ -1,10 +1,17 @@
+const { logger, requestLog } = require('./logger');
 const express = require('express');
 const { timingSafeEqual } = require('node:crypto');
 
 function createApp({ transporter, sender, serviceToken, enabled }) {
   if (!serviceToken) throw new Error('INTERNAL_SERVICE_TOKEN est requis.');
   const app = express();
-  app.use(express.json());
+  app.disable('x-powered-by');
+  app.use(requestLog);
+  app.get('/health', (req, res) => {
+    const ready = true;
+    res.status(ready ? 200 : 503).json({ status: ready ? 'ok' : 'unavailable' });
+  });
+  app.use(express.json({ limit: '64kb' }));
   app.use((req, res, next) => {
     const received = Buffer.from(req.get('X-Internal-Token') || '');
     const expected = Buffer.from(serviceToken);
@@ -39,10 +46,12 @@ function createApp({ transporter, sender, serviceToken, enabled }) {
       if (!result.accepted?.some((address) => address.toLowerCase() === to.toLowerCase())) {
         throw new Error('Destinataire refusé');
       }
-      console.log('Notification acceptée par le serveur SMTP');
-      return res.status(200).json({ message: 'Notification acceptée par le serveur SMTP.' });
+      logger.info('Notification acceptée par le fournisseur de messagerie');
+      return res
+        .status(200)
+        .json({ message: 'Notification acceptée par le fournisseur de messagerie.' });
     } catch {
-      console.error('Échec de l’envoi de la notification');
+      logger.error('Échec de l’envoi de la notification');
       return res.status(502).json({ message: 'Le mail de notification n’a pas pu être envoyé.' });
     }
   });

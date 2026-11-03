@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Restaure la session via le cookie HttpOnly ; aucun jeton n'est conservé dans le stockage du navigateur.
   useEffect(() => {
     let active = true;
     for (const key of ['token', 'username', 'role']) localStorage.removeItem(key);

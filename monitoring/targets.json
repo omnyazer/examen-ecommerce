@@ -1,0 +1,23 @@
+{
+  "description": "Liste de référence pour créer les moniteurs HTTP dans Uptime Kuma ; ce fichier n'est pas un export importable.",
+  "preproduction": [
+    { "name": "Application", "url": "https://ecommerce-app-preprod.onrender.com/health" },
+    { "name": "Gateway", "url": "https://ecommerce-gateway-preprod.onrender.com/health" },
+    { "name": "Stock", "url": "https://examen-ecommerce-fi28.onrender.com/health" },
+    { "name": "Notifications", "url": "https://examen-ecommerce-1.onrender.com/health" }
+  ],
+  "production": [
+    { "name": "Application", "url": "A_RENSEIGNER/health" },
+    { "name": "Gateway", "url": "A_RENSEIGNER/health" },
+    { "name": "Stock", "url": "A_RENSEIGNER/health" },
+    { "name": "Notifications", "url": "A_RENSEIGNER/health" }
+  ],
+  "settings": {
+    "expectedStatus": 200,
+    "timeoutSeconds": 120,
+    "intervalSeconds": 300,
+    "retries": 2,
+    "notificationOnDown": true,
+    "notificationOnRecovery": true
+  }
+}

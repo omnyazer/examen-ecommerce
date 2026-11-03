@@ -4,6 +4,7 @@ const CartContext = createContext();
 
 export const cartReducer = (state, action) => {
   switch (action.type) {
+    // Remplace les objets modifiés pour que React détecte la nouvelle quantité.
     case 'ADD_TO_CART': {
       const existingProductIndex = state.cart.findIndex((item) => item.id === action.payload.id);
 

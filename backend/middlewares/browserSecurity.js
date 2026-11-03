@@ -1,6 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 
+/** Autorise une origine précise et les navigations GET vers les pages, protège les appels API cross-site.
+ * @param {string} origin Origine exacte autorisée, sans slash final.
+ * @returns {object} Routeur Express de contrôle d'origine et CORS.
+ */
 function browserSecurity(origin) {
   const router = express.Router();
   router.use((req, res, next) => {

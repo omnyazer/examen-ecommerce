@@ -2,6 +2,11 @@ function httpError(status, message) {
   return Object.assign(new Error(message), { status });
 }
 
+/** Restitue uniquement les quantités encore réservées pour cette commande.
+ * @param {object} Product Modèle Mongoose de produits.
+ * @param {string} orderId Identifiant de commande.
+ * @param {Array<object>} items Produits et quantités validés.
+ */
 async function releaseStock(Product, orderId, items) {
   for (const { productId, quantity } of items) {
     await Product.findOneAndUpdate(
@@ -12,6 +17,11 @@ async function releaseStock(Product, orderId, items) {
   }
 }
 
+/** Réserve le stock par commande de façon idempotente et restitue une réservation partielle en cas d'échec.
+ * @param {object} Product Modèle Mongoose de produits.
+ * @param {string} orderId Identifiant de commande.
+ * @param {Array<object>} items Produits et quantités validés.
+ */
 async function reserveStock(Product, orderId, items) {
   const reserved = [];
   try {

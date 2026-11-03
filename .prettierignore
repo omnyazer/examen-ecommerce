@@ -3,6 +3,7 @@
 **/build/**
 **/dist/**
 **/coverage/**
+docs/api/**
 **/package-lock.json
 .env
 **/.env*

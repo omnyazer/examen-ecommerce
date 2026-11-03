@@ -8,6 +8,7 @@ export const hasPendingOrder = () => Boolean(sessionStorage.getItem(pendingKey))
 
 export const fetchProducts = () => axios.get(`${API_BASE_URL}/products`, { withCredentials: true });
 
+// Réutilise la même clé après une interruption pour éviter une double commande.
 export const createOrder = async (orderData) => {
   let key = sessionStorage.getItem(pendingKey);
   if (!key) {

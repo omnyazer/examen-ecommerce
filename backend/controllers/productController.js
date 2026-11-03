@@ -11,6 +11,11 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+/** Modifie le stock uniquement si sa valeur précédente correspond encore à expectedStock.
+ * @function updateProductStock
+ * @param {object} req Requête administrateur validée.
+ * @param {object} res Réponse incluant un conflit 409 en cas de modification concurrente.
+ */
 exports.updateProductStock = async (req, res) => {
   try {
     const { stock, expectedStock } = req.body || {};

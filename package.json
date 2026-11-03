@@ -9,7 +9,9 @@
     "start:gateway": "nodemon gateway/server.js",
     "start:backend": "nodemon backend/server.js",
     "start:frontend": "npm --prefix frontend start",
-    "start:all": "npm-run-all --parallel start:notifications start:stock-management start:gateway start:backend start:frontend"
+    "start:all": "npm-run-all --parallel start:notifications start:stock-management start:gateway start:backend start:frontend",
+    "docs": "jsdoc -c jsdoc.json",
+    "test:deploy": "node --test scripts/*.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -17,6 +19,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.14.0",
+    "jsdoc": "^4.0.5",
     "prettier": "^3.9.10"
   },
   "overrides": {

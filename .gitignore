@@ -31,3 +31,7 @@ coverage/
 .vitest/
 *.pem
 *.key
+
+# Documentation générée et données de supervision
+docs/api/
+monitoring/data/

@@ -4,7 +4,16 @@ import hooks from 'eslint-plugin-react-hooks';
 import prettier from 'eslint-config-prettier';
 
 export default [
-  { ignores: ['**/node_modules/**', '**/build/**', '**/dist/**', '**/coverage/**', '**/.git/**'] },
+  {
+    ignores: [
+      '**/node_modules/**',
+      '**/build/**',
+      '**/dist/**',
+      '**/coverage/**',
+      '**/.git/**',
+      'docs/api/**',
+    ],
+  },
   js.configs.recommended,
   {
     files: ['**/*.{js,cjs,mjs,jsx}'],
@@ -52,6 +61,10 @@ export default [
         ].map((name) => [name, 'readonly'])
       ),
     },
+  },
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: globals.node },
   },
   {
     files: ['frontend/postcss.config.js', 'frontend/tailwind.config.js'],

@@ -1,3 +1,4 @@
+const { logger } = require('../logger');
 // config/db.js
 const mongoose = require('mongoose');
 require('dotenv').config();
@@ -5,9 +6,9 @@ require('dotenv').config();
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('MongoDB connecté');
+    logger.info('MongoDB connecté');
   } catch (err) {
-    console.error('Erreur de connexion à MongoDB');
+    logger.error('Erreur de connexion à MongoDB');
     process.exit(1);
   }
 };

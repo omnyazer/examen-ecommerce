@@ -31,6 +31,16 @@ jobs:
         run: npm run lint
       - name: Vérifier Prettier
         run: npm run format:check
+      - name: Tester les scripts de déploiement
+        run: node --test scripts/*.test.mjs
+      - name: Générer la documentation technique
+        run: npm run docs
+      - name: Conserver la documentation
+        uses: actions/upload-artifact@v7
+        with:
+          name: documentation-api
+          path: docs/api/
+          retention-days: 3
       - name: Auditer les outils de qualité
         run: npm audit --audit-level=high
 
@@ -138,3 +148,76 @@ jobs:
       - name: Arrêter MongoDB de test
         if: always()
         run: docker rm --force ci-mongo || true
+
+  images:
+    name: Conteneur ${{ matrix.component.name }}
+    needs: [quality, frontend, backend]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        component:
+          - { name: app, context: '.', file: Dockerfile }
+          - { name: backend, context: backend, file: backend/Dockerfile }
+          - { name: frontend, context: frontend, file: frontend/Dockerfile }
+          - { name: gateway, context: gateway, file: gateway/Dockerfile }
+          - {
+              name: notifications,
+              context: microservices/notifications,
+              file: microservices/notifications/Dockerfile,
+            }
+          - {
+              name: stock,
+              context: microservices/stock-management,
+              file: microservices/stock-management/Dockerfile,
+            }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Construire l'image
+        env:
+          COMPONENT: ${{ matrix.component.name }}
+          CONTEXT: ${{ matrix.component.context }}
+          DOCKERFILE: ${{ matrix.component.file }}
+        run: docker build --file "$DOCKERFILE" --tag "exam-$COMPONENT:$GITHUB_SHA" "$CONTEXT"
+      - name: Publier sur GHCR
+        if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'staging') && vars.ENABLE_IMAGE_PUBLISH == 'true'
+        env:
+          COMPONENT: ${{ matrix.component.name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          image="ghcr.io/${GITHUB_REPOSITORY,,}/$COMPONENT:$GITHUB_SHA"
+          docker tag "exam-$COMPONENT:$GITHUB_SHA" "$image"
+          docker push "$image"
+
+  deploy:
+    name: Déployer sur Render
+    needs: [quality, frontend, backend, images]
+    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'staging') && vars.ENABLE_RENDER_CD == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    environment: ${{ github.ref_name == 'main' && 'production' || 'preproduction' }}
+    concurrency:
+      group: render-${{ github.ref_name }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22.23.1'
+      - name: Déployer et attendre les services
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_STOCK_HOOK: ${{ secrets.RENDER_STOCK_HOOK }}
+          RENDER_NOTIFICATIONS_HOOK: ${{ secrets.RENDER_NOTIFICATIONS_HOOK }}
+          RENDER_GATEWAY_HOOK: ${{ secrets.RENDER_GATEWAY_HOOK }}
+          RENDER_APP_HOOK: ${{ secrets.RENDER_APP_HOOK }}
+        run: node scripts/deploy-render.mjs

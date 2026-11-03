@@ -1,0 +1,14 @@
+{
+  "source": {
+    "include": [
+      "backend",
+      "gateway",
+      "microservices/stock-management",
+      "microservices/notifications"
+    ],
+    "includePattern": ".+\\.js$",
+    "excludePattern": "(node_modules|tests|seeder\\.js|admin\\.js)"
+  },
+  "opts": { "destination": "docs/api", "recurse": true, "encoding": "utf8" },
+  "templates": { "default": { "includeDate": false } }
+}

@@ -1,3 +1,4 @@
+const { requestLog } = require('./logger');
 const express = require('express');
 const { timingSafeEqual } = require('node:crypto');
 const { isObjectIdOrHexString } = require('mongoose');
@@ -6,6 +7,8 @@ const { reserveStock, releaseStock } = require('./stock');
 function createApp({ Product, serviceToken }) {
   if (!serviceToken) throw new Error('INTERNAL_SERVICE_TOKEN est requis.');
   const app = express();
+  app.disable('x-powered-by');
+  app.use(requestLog);
   const operations = new Map();
   async function serialize(orderId, operation) {
     const previous = operations.get(orderId) || Promise.resolve();
@@ -22,7 +25,11 @@ function createApp({ Product, serviceToken }) {
       if (operations.get(orderId) === current) operations.delete(orderId);
     }
   }
-  app.use(express.json());
+  app.get('/health', (req, res) => {
+    const ready = require('mongoose').connection.readyState === 1;
+    res.status(ready ? 200 : 503).json({ status: ready ? 'ok' : 'unavailable' });
+  });
+  app.use(express.json({ limit: '64kb' }));
   app.use((req, res, next) => {
     const received = Buffer.from(req.get('X-Internal-Token') || '');
     const expected = Buffer.from(serviceToken);

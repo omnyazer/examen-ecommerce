@@ -1,3 +1,4 @@
+const { logger } = require('../logger');
 const { randomUUID } = require('node:crypto');
 const Checkout = require('../models/Checkout');
 const Order = require('../models/Order');
@@ -19,6 +20,10 @@ async function notify(checkout) {
   );
 }
 
+/** Traite une demande avec un bail exclusif et reprend une réservation interrompue sans créer de doublon.
+ * @param {string} id Identifiant utilisateur:UUID de la demande.
+ * @returns {Promise<object>} ?tat persistant de la demande.
+ */
 async function processCheckout(id) {
   const owner = randomUUID();
   const checkout = await Checkout.findOneAndUpdate(
@@ -34,7 +39,7 @@ async function processCheckout(id) {
   const filter = { _id: id, leaseOwner: owner };
   const heartbeat = setInterval(() => {
     Checkout.updateOne(filter, { $set: { leaseUntil: new Date(Date.now() + 60000) } }).catch(() =>
-      console.error('La reprise de commande attend la base de données.')
+      logger.error('La reprise de commande attend la base de données.')
     );
   }, 10000);
   heartbeat.unref();
@@ -116,6 +121,9 @@ async function respond(checkout, res, confirmedStatus = 201) {
   });
 }
 
+/** Relance périodiquement les demandes interrompues et retourne une fonction d'arrêt attendable.
+ * @returns {Function} Fonction asynchrone arrêtant la boucle de reprise.
+ */
 function startRecovery() {
   let running = false;
   let currentRun = Promise.resolve();
@@ -145,7 +153,7 @@ function startRecovery() {
         { $set: { notificationStatus: 'unknown' } }
       );
     } catch {
-      console.error('La reprise des commandes sera retentée.');
+      logger.error('La reprise des commandes sera retentée.');
     } finally {
       running = false;
     }
