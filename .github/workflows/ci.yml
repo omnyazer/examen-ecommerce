@@ -70,16 +70,6 @@ jobs:
     name: Tests du backend et des microservices
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    services:
-      mongo:
-        image: mongo:8.0
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
     env:
       NODE_ENV: test
       NOTIFICATIONS_ENABLED: 'false'
@@ -104,6 +94,28 @@ jobs:
           for component in backend gateway microservices/notifications microservices/stock-management microservices/auth-gateway; do
             (cd "$component" && npm ci)
           done
+      - name: Démarrer MongoDB pour les tests
+        run: |
+          docker run --detach --name ci-mongo --publish 127.0.0.1:27017:27017 mongo:8.0
+          node --input-type=commonjs <<'NODE'
+          const mongoose = require('./backend/node_modules/mongoose');
+          (async () => {
+            const deadline = Date.now() + 120000;
+            while (Date.now() < deadline) {
+              try {
+                await mongoose.connect(process.env.RECOVERY_TEST_MONGO_URI, { serverSelectionTimeoutMS: 2000 });
+                await mongoose.connection.db.admin().ping();
+                await mongoose.disconnect();
+                console.log('MongoDB est prêt.');
+                return;
+              } catch {
+                await mongoose.disconnect();
+                await new Promise(resolve => setTimeout(resolve, 2000));
+              }
+            }
+            throw new Error('MongoDB ne répond pas après deux minutes.');
+          })().catch(error => { console.error(error.message); process.exitCode = 1; });
+          NODE
       - name: Tester le backend, les notifications et le stock
         run: >-
           node --test
@@ -115,3 +127,9 @@ jobs:
           for component in backend gateway microservices/notifications microservices/stock-management microservices/auth-gateway; do
             (cd "$component" && npm audit --audit-level=high)
           done
+      - name: Afficher les journaux MongoDB en cas d’échec
+        if: failure()
+        run: docker logs ci-mongo || true
+      - name: Arrêter MongoDB de test
+        if: always()
+        run: docker rm --force ci-mongo || true
